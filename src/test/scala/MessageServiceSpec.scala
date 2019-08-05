@@ -2,7 +2,6 @@
 import java.time.{LocalDateTime, ZoneId}
 import java.util.UUID
 
-import scala.language.reflectiveCalls
 import com.datastax.driver.core.SocketOptions
 import com.outworkers.phantom.connectors.{CassandraConnection, ContactPoint}
 import com.outworkers.phantom.dsl._
@@ -10,7 +9,10 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{BeforeAndAfterAll, Matchers, OptionValues, WordSpecLike}
-import persist.cassandra.user.{AppDatabase, AppDatabaseProvider, Message, MessageService}
+import persist.cassandra.{AppDatabase, AppDatabaseProvider}
+import persist.cassandra.user.{Message, MessageService}
+
+import scala.language.reflectiveCalls
 
 class MessageServiceSpec
   extends WordSpecLike

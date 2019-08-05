@@ -1,31 +1,24 @@
 
-import ai.bale.commons.kafka.KafkaExtension
-import ai.bale.rabbit9._
-import ai.bale.rabbit9.consistent.Rabbit9ConsistentManager
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import akka.kafka.ConsumerMessage.CommittableMessage
-import akka.kafka.Subscriptions
-import akka.kafka.scaladsl.Consumer
+import java.time.{LocalDateTime, ZoneId}
+import java.util.UUID
+
+import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import broker.rabbitmq.RabbitManagerExtension
 import com.bazaar.messages.ExampleMessages
-import com.rabbitmq.client.{AMQP, BuiltinExchangeType, Envelope}
 import im.actor.serialization.ActorSerializer
+import persist.cassandra.owner.{Owner, OwnerService}
 import persist.postgres.PostgresDBExtension
-import persist.postgres.model.Country
+import com.outworkers.phantom.dsl._
+import persist.cassandra.{AppDatabase, AppDatabaseProvider, CassandraConnection}
 import persist.postgres.repos.CountriesRepo
 import persist.redis.RedisExtension
-import scalapb.GeneratedMessage
 import sdk.CustomConfig
-
-import scala.concurrent.Future
-import scala.util.Random
+import util.TimeUtils
 
 object Main extends App {
 
   val config = CustomConfig.load()
   implicit val system: ActorSystem = ActorSystem("template", config)
-  implicit val ec = system.dispatcher
   implicit val mat = ActorMaterializer()
   val log = system.log
   ActorSerializer.register(85, classOf[ExampleMessages])
@@ -119,5 +112,22 @@ object Main extends App {
     log.error("get data from postgres: {}", result)
   }
 
+
+  import scala.language.reflectiveCalls
+
+  object MainDatabase extends AppDatabase(CassandraConnection.connection)
+
+  trait MainDatabaseProvider extends AppDatabaseProvider {
+    override def database: AppDatabase = MainDatabase
+  }
+
+  val ownerService = new OwnerService with MainDatabaseProvider
+
+
+  ownerService.database.create()
+  val partitionKey = "asghar"
+  val owner = Owner(UUID.randomUUID(), "asghar", "safdari", 123, LocalDateTime.now().atZone(ZoneId.systemDefault()).toEpochSecond)
+
+  ownerService.store(partitionKey, owner)
 
 }
