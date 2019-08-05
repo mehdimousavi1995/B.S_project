@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="20 seconds">
+    <logger name="slick.compiler" level="WARN"/>
+    <logger name="com.zaxxer.hikari.HikariConfig" level="WARN"/>
+    <logger name="org.flywaydb.core.internal.util.scanner.classpath.ClassPathScanner" level="WARN"/>
+    <logger name="org.apache.kafka.clients.producer.ProducerConfig" level="WARN"/>
+    <logger name="org.apache.kafka.clients.consumer.ConsumerConfig" level="WARN"/>
+    <logger name="slick.ast" level="WARN"/>
+    <logger name="akka.stream.impl" level="WARN"/>
+    <logger name="org.apache.zookeeper.ClientCnxn" level="WARN"/>
+    <logger name="slick.relational.ResultConverterCompiler" level="WARN"/>
+    <logger name="slick.jdbc.StatementInvoker.result" level="WARN"/>
+    <logger name="slick.jdbc.JdbcBackend.statement" level="WARN"/>
+    <logger name="slick.backend.DatabaseComponent.action" level="WARN"/>
+    <logger name="slick.jdbc.JdbcBackend.benchmark" level="WARN"/>
+    <logger name="akka.cluster.ddata.Replicator" level="INFO"/>
+    <logger name="akka.remote.EndpointWriter" level="INFO"/>
+    <logger name="org.apache.kafka.clients.consumer" level="WARN"/>
+    <logger name="o.apache.kafka.clients.NetworkClient" level="WARN"/>
+    <logger name="o.a.kafka.common.network.Selector" level="WARN"/>
+    <logger name="o.a.kafka.common.network" level="WARN"/>
+
+    <appender name="FILE-AUDI" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>sequence-service.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- rollover daily -->
+            <fileNamePattern>archive/sequence-service-log-%d{yyyy-MM-dd}.%i.zip</fileNamePattern>
+            <!-- each file should be at most 100MB, keep 60 days worth of history, but at most 20GB -->
+            <maxFileSize>200MB</maxFileSize>
+            <maxHistory>60</maxHistory>
+            <totalSizeCap>20GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %highlight(%-5level) %cyan(%logger{36}) %magenta(%X{akkaSource}) %X{authId} %X{sessionId} %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <withJansi>true</withJansi>
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss} %highlight(%-5level) %cyan(%logger{36}) %magenta(%X{akkaSource}) %X{authId} %X{sessionId} %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC-STDOUT" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="STDOUT" />
+    </appender>
+
+
+    <appender name="GELF" class="biz.paluch.logging.gelf.logback.GelfLogbackAppender">
+        <host>udp:127.0.0.1</host>
+        <port>514</port>
+        <version>1.1</version>
+        <facility>bot-server</facility>
+        <extractStackTrace>true</extractStackTrace>
+        <filterStackTrace>false</filterStackTrace>
+        <mdcProfiling>true</mdcProfiling>
+        <timestampPattern>yyyy-MM-dd HH:mm:ss,SSSS</timestampPattern>
+        <maximumMessageSize>819200</maximumMessageSize>
+
+        <includeFullMdc>true</includeFullMdc>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+    </appender>
+
+    <appender name="ASYNC-FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="FILE-AUDI" />
+    </appender>
+
+    <root level="debug">
+        <!--<appender-ref ref="GELF"/>-->
+        <appender-ref ref="ASYNC-STDOUT"/>
+
+    </root>
+</configuration>
